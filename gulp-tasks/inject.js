@@ -9,16 +9,15 @@ var merge = require('merge-stream');
 
 
 
+
 /* inject partials like sidebar and navbar */
 gulp.task('injectPartial', function () {
-    var injPartial1 =  gulp.src("./pages/**/*.html", { base: "./" })
-      .pipe(injectPartials())
-      .pipe(gulp.dest("."));
-    var injPartial2 =  gulp.src("./*.html", { base: "./" })
-      .pipe(injectPartials())
-      .pipe(gulp.dest("."));
-    return merge(injPartial1, injPartial2);
-  });
+    return gulp.src(["./pages/*/*.html", "./index.html"], {
+        base: "./"
+    })
+        .pipe(injectPartials())
+        .pipe(gulp.dest("."));
+});
 
 
 
@@ -27,7 +26,7 @@ gulp.task('injectAssets', function () {
     return gulp.src(["./**/*.html"])
         .pipe(inject(gulp.src([
             './assets/vendors/mdi/css/materialdesignicons.min.css',
-            './assets/vendors/flag-icon-css/css/flag-icon.min.css',
+            './assets/vendors/flag-icon-css/css/flag-icons.min.css',
             './assets/vendors/css/vendor.bundle.base.css',
             './assets/vendors/js/vendor.bundle.base.js',
         ], {
@@ -41,6 +40,8 @@ gulp.task('injectAssets', function () {
             './assets/js/off-canvas.js',
             './assets/js/hoverable-collapse.js',
             './assets/js/misc.js',
+            './assets/js/settings.js',
+            './assets/js/todolist.js'
         ], {
             read: false
         }), {
@@ -53,32 +54,23 @@ gulp.task('injectAssets', function () {
 
 /*replace image path and linking after injection*/
 gulp.task('replacePath', function () {
-    var replacePath1 = gulp.src('pages/**/*.html', {
-            base: "./"
-        })
-        .pipe(replace('src="assets/images/', 'src="../../assets/images/'))
-        .pipe(replace('href="pages/', 'href="../../pages/'))
-        .pipe(replace('href="index.html"', 'href="../../index.html"'))
+    var replacePath1 = gulp.src('./pages/**/*.html', {
+        base: "./"
+    })
+        .pipe(replace('="../assets/', '="../../assets/'))
+        .pipe(replace('href="../pages/', 'href="../../pages/'))
+        .pipe(replace('="../docs/', '="../../docs/'))
+        .pipe(replace('href="../index.html"', 'href="../../index.html"'))
         .pipe(gulp.dest('.'));
-    var replacePath2 = gulp.src('./**/index.html', {
-            base: "./"
-        })
-        .pipe(replace('src="assets/images/', 'src="assets/images/'))
+    var replacePath2 = gulp.src('./index.html', { base: "./" })
+        .pipe(replace('="../assets/', '="assets/'))
+        .pipe(replace('="../docs/', '="docs/'))
+        .pipe(replace('="../pages/', '="pages/'))
+        .pipe(replace('="../index.html"', '="index.html"'))
         .pipe(gulp.dest('.'));
     return merge(replacePath1, replacePath2);
 });
 
 
-
-gulp.task('html-beautify', function () {
-    return gulp.src(['./**/*.html', '!node_modules/**/*.html'])
-        .pipe(prettify({
-            unformatted: ['pre', 'code', 'textarea']
-        }))
-        .pipe(gulp.dest(function (file) {
-            return file.base;
-        }));
-});
-
 /*sequence for injecting partials and replacing paths*/
-gulp.task('inject', gulp.series('injectPartial', 'injectAssets', 'html-beautify', 'replacePath'));
+gulp.task('inject', gulp.series('injectPartial', 'injectAssets', 'replacePath'));
